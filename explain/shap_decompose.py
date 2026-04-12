@@ -348,8 +348,7 @@ class InflationDecomposer:
             for i, name in enumerate(all_names):
                 if name.startswith("lag_"):
                     try:
-                        lag_num = int(name.split("_")[1])
-                        mapping[name] = f"cpi_headline_lag{lag_num}"
+                        mapping[name] = "cpi_headline_mom"
                     except (IndexError, ValueError):
                         mapping[name] = name
         except Exception:

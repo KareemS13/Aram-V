@@ -1,6 +1,6 @@
 group,mean_abs_shap,net_contribution,direction
 Seasonality,0.3814,0.0492,inflationary
-Other,0.2644,-0.0444,disinflationary
+Own momentum,0.2644,-0.0444,disinflationary
 Energy,0.0862,-0.0168,disinflationary
 Food prices,0.0714,-0.0175,disinflationary
 Structural shocks,0.0,0.0,disinflationary

@@ -152,7 +152,7 @@ SHAP_GROUPS = {
                           "imports_cereals_mom", "exports_total_mom"],
     "Own momentum":      ["cpi_headline_mom"],
     "Seasonality":       ["month_sin", "month_cos", "is_q1", "is_summer", "year_trend"],
-    "Structural shocks": list(STRUCTURAL_BREAKS.keys()),
+    "Structural shocks": list(STRUCTURAL_BREAKS.keys()) + ["rub_ukraine"],
 }
 
 SHAP_GROUP_COLORS = {
