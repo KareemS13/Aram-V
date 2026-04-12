@@ -71,6 +71,6 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add outputs/tables/ outputs/figures/ data_raw/armstat_cpi_patch.csv data_raw/cba_policy_rate.csv outputs/pipeline_run.log
+          git add outputs/tables/ outputs/figures/ data_raw/armstat_cpi_patch.csv data_raw/cba_policy_rate.csv
           git diff --cached --quiet || git commit -m "chore: monthly refresh [$(date -u +%Y-%m-%d)]"
           git push
