@@ -1,0 +1,35 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# Raw data (large Excel files — download manually or via scraper)
+data_raw/armstat_cpi_coicop.xlsx
+data_raw/armstat_cpi_headline.xlsx
+data_raw/armstat_cpi_weights.xlsx
+data_raw/CMO-Historical-Data-Monthly.xlsx
+
+# Comtrade cache (regenerated automatically)
+data_raw/comtrade_cache/
+
+# Generated outputs (committed by CI after each run)
+# outputs/ is intentionally NOT ignored — figures and tables are served by the app
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+
+# Temp
+*.log
+*.tmp

@@ -1,0 +1,76 @@
+name: Monthly CPI Forecast Refresh
+
+on:
+  schedule:
+    - cron: "0 4 5 * *"   # 4 AM UTC on the 5th of every month
+                            # (ArmStat publishes previous month's CPI ~3-5 days in)
+  workflow_dispatch:        # manual trigger from GitHub UI
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # -----------------------------------------------------------------------
+      # Step 1: Scrape latest CPI from ArmStat
+      # -----------------------------------------------------------------------
+      - name: Scrape latest ArmStat CPI data
+        run: |
+          python data/scrape_armstat.py
+          echo "Scrape exit code: $?"
+
+      # -----------------------------------------------------------------------
+      # Step 2: Fetch latest Comtrade trade data (refreshes cache)
+      # -----------------------------------------------------------------------
+      - name: Refresh Comtrade trade data cache
+        env:
+          COMTRADE_API_KEY: ${{ secrets.COMTRADE_API_KEY }}
+        run: |
+          python - <<'EOF'
+          import os
+          from dotenv import load_dotenv
+          load_dotenv()
+          from data.ingest_comtrade import fetch_trade_data
+          key = os.environ.get("COMTRADE_API_KEY", "")
+          if not key:
+              print("No COMTRADE_API_KEY — skipping trade data refresh.")
+          else:
+              df = fetch_trade_data(api_key=key, start="2010-01-01", use_cache=False)
+              print(f"Trade data refreshed: {len(df)} months, last: {df.index.max().strftime('%Y-%m')}")
+          EOF
+
+      # -----------------------------------------------------------------------
+      # Step 3: Run full forecasting pipeline
+      # -----------------------------------------------------------------------
+      - name: Run inflation forecasting pipeline
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          COMTRADE_API_KEY: ${{ secrets.COMTRADE_API_KEY }}
+        run: |
+          python inflation.py --no-tune 2>&1 | tee outputs/pipeline_run.log
+
+      # -----------------------------------------------------------------------
+      # Step 4: Commit updated outputs back to repo
+      # -----------------------------------------------------------------------
+      - name: Commit updated outputs
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add outputs/tables/ outputs/figures/ data_raw/armstat_cpi_patch.csv data_raw/cba_policy_rate.csv outputs/pipeline_run.log
+          git diff --cached --quiet || git commit -m "chore: monthly refresh [$(date -u +%Y-%m-%d)]"
+          git push

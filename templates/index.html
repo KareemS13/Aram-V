@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Armenia CPI Forecast Dashboard</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+</head>
+<body>
+
+<!-- ============================================================ SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">
+      <span class="logo-flag">🇦🇲</span>
+      <div>
+        <div class="logo-title">Armenia CPI</div>
+        <div class="logo-sub">Inflation Forecast</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a href="#overview"     class="nav-item active" data-section="overview">
+      <span class="nav-icon">◈</span> Overview
+    </a>
+    <a href="#attribution"  class="nav-item" data-section="attribution">
+      <span class="nav-icon">◈</span> Driver Attribution
+    </a>
+    <a href="#models"       class="nav-item" data-section="models">
+      <span class="nav-icon">◈</span> Model Performance
+    </a>
+    <a href="#diagnostics"  class="nav-item" data-section="diagnostics">
+      <span class="nav-icon">◈</span> Diagnostics
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <button class="btn-run" id="btnRun">Run New Forecast</button>
+    <div class="sidebar-meta" id="sidebarMeta">Loading data…</div>
+  </div>
+</aside>
+
+<!-- ============================================================ MAIN -->
+<main class="main" id="main">
+
+  <!-- ── OVERVIEW ─────────────────────────────────────────────────────── -->
+  <section id="overview" class="section">
+    <div class="section-header">
+      <h2>Forecast Overview</h2>
+      <span class="badge" id="lastUpdated">—</span>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Last Observed CPI MoM%</div>
+        <div class="kpi-value" id="kpiLast">—</div>
+        <div class="kpi-sub" id="kpiLastDate">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">12-Month Forecast Range</div>
+        <div class="kpi-value" id="kpiFcRange">—</div>
+        <div class="kpi-sub">point forecast min → max</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Top Inflation Driver</div>
+        <div class="kpi-value" id="kpiDriver">—</div>
+        <div class="kpi-sub" id="kpiDriverDir">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Ensemble Weights</div>
+        <div class="kpi-value" id="kpiWeights">—</div>
+        <div class="kpi-sub">SARIMA / GBM (inverse-MAE)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>CPI MoM% — History &amp; 12-Month Ensemble Forecast</h3>
+        <span class="card-hint">Hover for values · Drag to zoom</span>
+      </div>
+      <div id="forecastChart" class="plotly-chart"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>CPI YoY% — Rolling 12-Month Annual Inflation</h3>
+        <span class="card-hint">Compounded from MoM% · Includes actual months until window is fully forecast</span>
+      </div>
+      <div id="yoyChart" class="plotly-chart"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>Forecast Table</h3></div>
+      <div class="table-wrap">
+        <table class="data-table" id="forecastTable">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>MoM% Forecast</th>
+              <th>YoY% Forecast</th>
+              <th>50% CI (MoM)</th>
+              <th>95% CI (MoM)</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── DRIVER ATTRIBUTION ────────────────────────────────────────────── -->
+  <section id="attribution" class="section">
+    <div class="section-header"><h2>SHAP Driver Attribution</h2></div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Driver Groups — Average |SHAP| over 12-Month Horizon</h3>
+        <span class="card-hint">Bar width = importance · Color = direction</span>
+      </div>
+      <div id="driverBars" class="driver-bars"></div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header"><h3>SHAP Waterfall — Month +1</h3></div>
+        <img src="/figures/03_shap_waterfall_m1.png" class="fig-img" alt="SHAP Waterfall" />
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Driver Contributions — 12-Month Horizon</h3></div>
+        <img src="/figures/04_shap_contribution_12m.png" class="fig-img" alt="SHAP Stacked Bar" />
+      </div>
+    </div>
+  </section>
+
+  <!-- ── MODEL PERFORMANCE ─────────────────────────────────────────────── -->
+  <section id="models" class="section">
+    <div class="section-header"><h2>Model Performance</h2></div>
+
+    <div class="card">
+      <div class="card-header"><h3>Walk-Forward CV Metrics</h3></div>
+      <div class="table-wrap">
+        <table class="data-table" id="metricsTable">
+          <thead>
+            <tr><th>Model</th><th>Horizon</th><th>MAE (pp)</th><th>RMSE (pp)</th><th>MAPE (%)</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>MAE by Model &amp; Forecast Horizon</h3></div>
+      <img src="/figures/06_model_comparison.png" class="fig-img" alt="Model Comparison" />
+    </div>
+  </section>
+
+  <!-- ── DIAGNOSTICS ───────────────────────────────────────────────────── -->
+  <section id="diagnostics" class="section">
+    <div class="section-header"><h2>Model Diagnostics</h2></div>
+
+    <div class="card">
+      <div class="card-header"><h3>COICOP Sub-Index Heatmap (Last 24 Months)</h3></div>
+      <img src="/figures/02_coicop_heatmap.png" class="fig-img" alt="COICOP Heatmap" />
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header"><h3>SARIMA Residual Diagnostics</h3></div>
+        <img src="/figures/05_sarima_diagnostics.png" class="fig-img" alt="SARIMA Diagnostics" />
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>SARIMA Coefficient Table</h3></div>
+        <img src="/figures/07_sarima_coefficients.png" class="fig-img" alt="SARIMA Coefficients" />
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============================================================ RUN MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Run Forecast Pipeline</h3>
+      <button class="modal-close" id="modalClose">&times;</button>
+    </div>
+
+    <div class="modal-body" id="modalBody">
+      <div class="run-options">
+        <label class="toggle-label">
+          <input type="checkbox" id="optNoTune" />
+          <span class="toggle-text">
+            <strong>Skip GBM tuning</strong>
+            <small>Faster (~2 min). Uses default hyperparameters.</small>
+          </span>
+        </label>
+        <label class="toggle-label">
+          <input type="checkbox" id="optNoCV" />
+          <span class="toggle-text">
+            <strong>Skip walk-forward CV</strong>
+            <small>Faster (~5 min). No model comparison chart.</small>
+          </span>
+        </label>
+      </div>
+      <button class="btn-start" id="btnStart">Start Pipeline</button>
+    </div>
+
+    <div class="modal-log" id="modalLog" style="display:none">
+      <div class="log-header">
+        <span id="logStatus">Running…</span>
+        <button class="btn-refresh" id="btnRefresh" style="display:none">Reload Dashboard</button>
+      </div>
+      <pre id="logOutput"></pre>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/main.js"></script>
+</body>
+</html>
