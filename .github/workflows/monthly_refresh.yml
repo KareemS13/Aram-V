@@ -31,8 +31,10 @@ jobs:
       # -----------------------------------------------------------------------
       - name: Scrape latest ArmStat CPI data
         run: |
-          python data/scrape_armstat.py
-          echo "Scrape exit code: $?"
+          python data/scrape_armstat.py || code=$?
+          # Exit code 1 = already up to date (not an error)
+          # Exit code 2 = real error
+          if [ "${code:-0}" -eq 2 ]; then exit 2; fi
 
       # -----------------------------------------------------------------------
       # Step 2: Fetch latest Comtrade trade data (refreshes cache)
