@@ -9,10 +9,7 @@ __pycache__/
 venv/
 env/
 
-# Raw data (large Excel files — download manually or via scraper)
-data_raw/armstat_cpi_coicop.xlsx
-data_raw/armstat_cpi_headline.xlsx
-data_raw/armstat_cpi_weights.xlsx
+# Raw data (WB Pink Sheet fallback — download manually if needed)
 data_raw/CMO-Historical-Data-Monthly.xlsx
 
 # Comtrade cache (regenerated automatically)

@@ -62,6 +62,7 @@ jobs:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
           COMTRADE_API_KEY: ${{ secrets.COMTRADE_API_KEY }}
         run: |
+          set -o pipefail
           python inflation.py --no-tune 2>&1 | tee outputs/pipeline_run.log
 
       # -----------------------------------------------------------------------
