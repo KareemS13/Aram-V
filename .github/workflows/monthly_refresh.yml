@@ -45,8 +45,6 @@ jobs:
         run: |
           python - <<'EOF'
           import os
-          from dotenv import load_dotenv
-          load_dotenv()
           from data.ingest_comtrade import fetch_trade_data
           key = os.environ.get("COMTRADE_API_KEY", "")
           if not key:
